@@ -1,0 +1,8 @@
+base58==2.1.1
+colorama==0.4.6
+ecdsa==0.18.0
+llvmlite==0.41.1
+numba==0.58.1
+numpy==1.26.2
+six==1.16.0
+tqdm==4.66.1
