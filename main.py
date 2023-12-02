@@ -8,10 +8,6 @@ from tqdm import tqdm
 from numba import jit, njit
 # @jit(nopython='True') ou @njit
 
-from flask import Flask
-app = Flask(__name__)
-
-@app.route('/')
 
 def corresponde(str1, str2):
     len_str1 = len(str1)
