@@ -86,7 +86,7 @@ def chavebitcoin(iniciohex, finalhex, premio):
         json.dump(resultados_json, json_file, indent=4)
 
 if __name__ == "__main__":
-    iniciohex = "000000000000000000000000000000000000000000000003555555550000000000" 
-    finalhex  = "00000000000000000000000000000000000000000000000355555555ffffffff"
+    iniciohex = "000000000000000000000000000000000000000000000003666666660000000000" 
+    finalhex  = "00000000000000000000000000000000000000000000000366666666ffffffff"
     premio    = "13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so"
     chavebitcoin(iniciohex, finalhex, premio)
