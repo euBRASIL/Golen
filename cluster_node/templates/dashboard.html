@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dashboard - Cluster Node{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+<p>Welcome, {{ user.username }}!</p>
+
+<h2>Registered Nodes</h2>
+<div id="node-list-table">
+    {% if nodes %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>IP Address</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Last Update</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for node in nodes %}
+                <tr id="node-{{ node.id }}">
+                    <td>{{ node.id }}</td>
+                    <td>{{ node.ip }}</td>
+                    <td class="node-location">{{ node.location }}</td>
+                    <td class="node-status">{{ node.status }}</td>
+                    <td>{{ node.last_update|date:"Y-m-d H:i:s" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No nodes registered yet.</p>
+    {% endif %}
+</div>
+
+<h2>Node Status Map</h2>
+<div id="map-container" style="max-width: 600px; margin: auto;">
+    {% include "mapa_brasil.svg" %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const mapContainer = document.getElementById("map-container");
+    const nodeListTable = document.getElementById("node-list-table");
+
+    function updateNodeDisplay(nodesData) {
+        const svgMap = mapContainer.querySelector("#brazil-map");
+        if (svgMap) {
+            svgMap.querySelectorAll(".state").forEach(statePath => {
+                statePath.classList.remove("online", "offline");
+                statePath.classList.add("unknown");
+            });
+
+            nodesData.forEach(node => {
+                const stateElement = svgMap.querySelector("#" + node.location);
+                if (stateElement) {
+                    stateElement.classList.remove("unknown", "offline", "online");
+                    if (node.status === "online") {
+                        stateElement.classList.add("online");
+                    } else {
+                        stateElement.classList.add("offline");
+                    }
+                }
+            });
+        }
+
+        let tableHTML = "<table><thead><tr><th>ID</th><th>IP Address</th><th>Location</th><th>Status</th><th>Last Update</th></tr></thead><tbody>";
+        if (nodesData && nodesData.length > 0) {
+            nodesData.forEach(node => {
+                let formattedDate = "N/A";
+                if (node.last_update) {
+                    try {
+                        const date = new Date(node.last_update);
+                        formattedDate = date.toLocaleString();
+                    } catch (e) {
+                        formattedDate = node.last_update;
+                    }
+                }
+                tableHTML += `<tr>
+                                <td>${node.id}</td>
+                                <td>${node.ip}</td>
+                                <td>${node.location}</td>
+                                <td>${node.status}</td>
+                                <td>${formattedDate}</td>
+                              </tr>`;
+            });
+            tableHTML += "</tbody></table>";
+        } else {
+            tableHTML = "<p>No nodes registered yet.</p>";
+        }
+        nodeListTable.innerHTML = tableHTML;
+    }
+
+    function fetchNodeData() {
+        fetch("/api/nodes/", {
+            method: "GET",
+            headers: { "Accept": "application/json" }
+        })
+        .then(response => {
+            if (response.status === 403) {
+                console.warn("Failed to fetch node data: Permission denied.");
+                return null;
+            }
+            if (!response.ok) {
+                throw new Error("Network response was not ok for /api/nodes/");
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data) {
+                updateNodeDisplay(data);
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching node data:", error);
+        });
+    }
+
+    fetchNodeData();
+    setInterval(fetchNodeData, 10000);
+});
+</script>
+{% endblock %}
