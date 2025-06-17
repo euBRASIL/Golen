@@ -1,0 +1,26 @@
+<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" id="brazil-map">
+    <style>
+        .state { stroke: #333; stroke-width: 1px; transition: fill 0.3s ease; }
+        .state.online { fill: #4CAF50; /* Green */ }
+        .state.offline { fill: #F44336; /* Red */ }
+        .state.unknown { fill: #9E9E9E; /* Grey for states with no node or unknown status */ }
+    </style>
+    <rect width="100%" height="100%" fill="#f0f0f0" />
+
+    <path id="SP" class="state unknown" d="M100,150 l20,0 l0,20 l-20,0 z" data-name="São Paulo"></path>
+    <text x="110" y="165" font-size="8" text-anchor="middle">SP</text>
+    <path id="RJ" class="state unknown" d="M130,170 l20,0 l0,15 l-20,0 z" data-name="Rio de Janeiro"></path>
+    <text x="140" y="180" font-size="8" text-anchor="middle">RJ</text>
+    <path id="MG" class="state unknown" d="M110,120 l30,0 l10,20 l-30,10 z" data-name="Minas Gerais"></path>
+    <text x="125" y="135" font-size="8" text-anchor="middle">MG</text>
+    <path id="BA" class="state unknown" d="M150,100 l25,0 l5,25 l-20,5 z" data-name="Bahia"></path>
+    <text x="165" y="115" font-size="8" text-anchor="middle">BA</text>
+    <path id="PR" class="state unknown" d="M90,180 l20,0 l0,20 l-20,0 z" data-name="Paraná"></path>
+    <text x="100" y="195" font-size="8" text-anchor="middle">PR</text>
+    <path id="RS" class="state unknown" d="M80,210 l20,0 l0,20 l-20,0 z" data-name="Rio Grande do Sul"></path>
+    <text x="90" y="225" font-size="8" text-anchor="middle">RS</text>
+    <path id="AM" class="state unknown" d="M50,50 l40,10 l10,40 l-50,0 z" data-name="Amazonas"></path>
+    <text x="70" y="80" font-size="8" text-anchor="middle">AM</text>
+
+    <text x="150" y="20" font-size="12" text-anchor="middle">Simplified Map of Brazil - Node Status</text>
+</svg>
