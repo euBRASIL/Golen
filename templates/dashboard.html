@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load static %} {# Make sure to load static if not already in base.html for this script tag type #}
+{% block title %}Dashboard - Cluster Node{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+<p>Welcome, {{ user.username }}!</p>
+
+<h2>Registered Nodes</h2>
+<div id="node-list-table">
+    {% if nodes %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>IP Address</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Last Update</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for node in nodes %}
+                <tr id="node-{{ node.id }}">
+                    <td>{{ node.id }}</td>
+                    <td>{{ node.ip }}</td>
+                    <td class="node-location">{{ node.location }}</td>
+                    <td class="node-status">{{ node.status }}</td>
+                    <td>{{ node.last_update|date:"Y-m-d H:i:s" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No nodes registered yet.</p>
+    {% endif %}
+</div>
+
+<h2>Node Status Map</h2>
+<div id="map-container" style="max-width: 600px; margin: auto;">
+    {% include "mapa_brasil.svg" %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const mapContainer = document.getElementById("map-container");
+    const nodeListTable = document.getElementById("node-list-table");
+    const initialNodes = JSON.parse("{{ nodes|json_script:'initial-nodes-data' }}");
+
+    function updateNodeDisplay(nodesData) {
+        // Update map
+        const svgMap = mapContainer.querySelector("#brazil-map");
+        if (svgMap) {
+            // Reset all states to unknown first
+            svgMap.querySelectorAll(".state").forEach(statePath => {
+                statePath.classList.remove("online", "offline");
+                statePath.classList.add("unknown");
+            });
+
+            nodesData.forEach(node => {
+                const stateElement = svgMap.querySelector("#" + node.location); // Assuming node.location is state ID like "SP"
+                if (stateElement) {
+                    stateElement.classList.remove("unknown", "offline", "online"); // remove all status classes
+                    if (node.status === "online") {
+                        stateElement.classList.add("online");
+                    } else {
+                        stateElement.classList.add("offline");
+                    }
+                }
+            });
+        }
+
+        // Update table
+        let tableHTML = "<table><thead><tr><th>ID</th><th>IP Address</th><th>Location</th><th>Status</th><th>Last Update</th></tr></thead><tbody>";
+        if (nodesData && nodesData.length > 0) {
+            nodesData.forEach(node => {
+                // Format last_update (assuming it is a string like "YYYY-MM-DDTHH:MM:SS.mmmmmmZ")
+                let formattedDate = "N/A";
+                if (node.last_update) {
+                    try {
+                        const date = new Date(node.last_update);
+                        formattedDate = date.toLocaleString(); // Or more specific formatting
+                    } catch (e) {
+                        console.error("Error formatting date: ", node.last_update, e);
+                        formattedDate = node.last_update; // fallback
+                    }
+                }
+
+                tableHTML += `<tr id="node-${node.id}">
+                                <td>${node.id}</td>
+                                <td>${node.ip}</td>
+                                <td class="node-location">${node.location}</td>
+                                <td class="node-status">${node.status}</td>
+                                <td>${formattedDate}</td>
+                              </tr>`;
+            });
+            tableHTML += "</tbody></table>";
+        } else {
+            tableHTML = "<p>No nodes registered yet.</p>";
+        }
+        nodeListTable.innerHTML = tableHTML;
+    }
+
+    function fetchNodeData() {
+        fetch("/api/nodes/", {
+            method: "GET",
+            headers: {
+                "Accept": "application/json",
+                // CSRF token might be needed if sessions are strictly checked, but usually not for GET API with DRF
+                // "X-CSRFToken": getCookie("csrftoken") // Implement getCookie if needed
+            }
+        })
+        .then(response => {
+            if (response.status === 403) { // Forbidden - likely not logged in or session expired
+                console.warn("Failed to fetch node data: Permission denied. Redirecting to login.");
+                // window.location.href = "{% url 'login' %}?next={% url 'dashboard' %}"; // Consider this
+                return null;
+            }
+            if (!response.ok) {
+                throw new Error("Network response was not ok for /api/nodes/");
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data) {
+                updateNodeDisplay(data);
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching node data:", error);
+            // Optionally update UI to show an error state
+        });
+    }
+
+    // Initial update with server-rendered data if available, then start polling
+    // The initial 'nodes' variable from Django context is not directly usable as JSON for JS,
+    // so it's better to rely on the first AJAX call or use json_script filter if needed.
+    // For simplicity, we'll just start polling.
+
+    // If you want to use initial data to avoid first flicker:
+    // if (initialNodes && initialNodes.length > 0) {
+    //    updateNodeDisplay(initialNodes); // This needs initialNodes to be actual JSON
+    // }
+
+    fetchNodeData(); // Initial fetch
+    setInterval(fetchNodeData, 10000); // Poll every 10 seconds
+});
+
+// Helper function to get CSRF cookie if needed for POST/PUT/DELETE AJAX from JS
+// function getCookie(name) {
+//     let cookieValue = null;
+//     if (document.cookie && document.cookie !== "") {
+//         const cookies = document.cookie.split(";");
+//         for (let i = 0; i < cookies.length; i++) {
+//             const cookie = cookies[i].trim();
+//             if (cookie.substring(0, name.length + 1) === (name + "=")) {
+//                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+//                 break;
+//             }
+//         }
+//     }
+//     return cookieValue;
+// }
+</script>
+{% endblock %}
